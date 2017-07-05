@@ -1,3 +1,3 @@
 # Project Ikarus
 
-Controllable Airship with built-in autopilot. 
+Controllable airship with built-in autopilot. 
