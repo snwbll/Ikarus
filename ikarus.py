@@ -2,7 +2,6 @@
 
 import Tkinter as tk
 import time
-import sys
 from threading import Thread
 import webbrowser
 from datetime import datetime
@@ -11,7 +10,17 @@ import networking
 
 ##################################################################### Info
 
-ikarusVersion = "0.8"
+ikarusVersion = "0.9"
+
+# log 0.1: Verbindung
+# log 0.2: Verbindungsprobleme behoben
+# log 0.3: UI
+# log 0.4: Multithreading
+# log 0.5: UI und Verbindung verbessert
+# log 0.6: Leistungsverbesserungen
+# log 0.7: UI und Verbindung verbessert
+# log 0.8: Fehlerbehebungen
+# log 0.9: Unterstützung für Autopilot integriert
 
 ##################################################################### Running Variables
 

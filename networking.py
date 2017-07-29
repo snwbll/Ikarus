@@ -50,10 +50,10 @@ def initconnection():
             gpscon.start()  # GPS - Verbindung wird aufgebaut, sobald eine normale Verbindung besteht
             break
         except paramiko.AuthenticationException:
-            print("Authentifizierung fehlgeschalagen bei Verbindung mit %d." % host)
+            print("Authentifizierung fehlgeschalagen bei Verbindung mit " + host)
             sys.exit(1)
         except:
-            print("Verbindung fehlgeschlagen, warten auf %s" % host)
+            print("Verbindung fehlgeschlagen, warten auf " + host)
             counter += 1
             time.sleep(2)
         if counter > 10:
@@ -70,7 +70,6 @@ def execute(command):
                 if len(rl) > 0:
                     return stdout.channel.recv(1024)  # Output
     except Exception as e:
-        return str(e)
         print ("Fehler in execute: " + str(e))
 
 
@@ -126,6 +125,18 @@ def execute_nooutput(command):
 
 def pilot():
     global sshverbindung3
+    ssh3 = sshverbindung3.invoke_shell()
+    stdin = ssh3.makefile('wb')
+    stdout = ssh3.makefile('rb')
+    print "pilot beginnt nun mit der shellverbindung"
+    while True:
+        print "printed"
+        stdin.write("echo 123")
+        print "written"
+        
+        time.sleep(2)
+
+"""
     global pilotrunning
     try:
         stdin, stdout, stderr = sshverbindung3.exec_command("python autopilot.py")
@@ -140,7 +151,7 @@ def pilot():
                     time.sleep(2)
             except Exception as e:
                 time.sleep(3)  # Verbindung unterbrochen, einfach weiterversuchen
-                print "Die Excption für Pilot bei Verbindung ist nix da: " + str(e)  # if e == blablabla
+                print "Die Exception für Pilot bei Verbindung ist nicht vorhanden: " + str(e)  # if e == blablabla
 
         # pilotrunning == False, Pilot ist also ausgeschalten. Um den Autopiloten zu beenden wird der Input 2 gegeben.
         i = 0
@@ -164,7 +175,7 @@ def pilot():
 
     # Pilot ist fertig, der Autopilot wurde beendet
     print "Pilot beendet"
-
+"""
 
 def mtest():
     print "Motorentest: t = 3 Sekunden\nLinks\nRechts\nZurueck\nOben\nUnten\n"
