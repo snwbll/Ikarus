@@ -8,9 +8,7 @@ from threading import Thread
 from datetime import datetime
 
 getgpsdatarunning = True
-pilotrunning = True
-autopiloton = False
-host = "192.168.1.120"  # dynamischer: raw_input("\ninet Adresse des Hosts: "), pi muss aber eine statische IP haben
+host = "192.168.1.120"  # dynamischer: raw_input("\ninet Adresse des Hosts: "), pi muss so eine statische IP haben
 username = "pi"
 password = "Snowball"
 nodata = "Keine Daten"
@@ -44,8 +42,6 @@ def initconnection():
             sshverbindung2 = ssh2
             sshverbindung3 = ssh3
             execute("sudo gpsd /dev/ttyUSB0 -F /var/run/gpsd.sock")  # GPS wird aktiviert
-            pilott = Thread(target=pilot)
-            pilott.start()  # Pilot wird aktiviert, der mit dem Autopiloten kommuniziert
             gpscon = Thread(target=gpsconnection)
             gpscon.start()  # GPS - Verbindung wird aufgebaut, sobald eine normale Verbindung besteht
             break
@@ -122,60 +118,6 @@ def execute_nooutput(command):
     except Exception as e:
         print("Fehler in execute_nooutput: " + str(e))
 
-
-def pilot():
-    global sshverbindung3
-    ssh3 = sshverbindung3.invoke_shell()
-    stdin = ssh3.makefile('wb')
-    stdout = ssh3.makefile('rb')
-    print "pilot beginnt nun mit der shellverbindung"
-    while True:
-        print "printed"
-        stdin.write("echo 123")
-        print "written"
-        
-        time.sleep(2)
-
-"""
-    global pilotrunning
-    try:
-        stdin, stdout, stderr = sshverbindung3.exec_command("python autopilot.py")
-        while pilotrunning == True:
-            try:
-                if autopiloton == True:
-                    time.sleep(4)
-                    print "Autopilot ein"
-                else:
-                    # autopiloton == False
-                    stdin.write('1\n')
-                    time.sleep(2)
-            except Exception as e:
-                time.sleep(3)  # Verbindung unterbrochen, einfach weiterversuchen
-                print "Die Exception für Pilot bei Verbindung ist nicht vorhanden: " + str(e)  # if e == blablabla
-
-        # pilotrunning == False, Pilot ist also ausgeschalten. Um den Autopiloten zu beenden wird der Input 2 gegeben.
-        i = 0
-        while True:
-            try:
-                for i in range(1, 3):
-                    stdin.write('2\n')
-                    time.sleep(1)
-                print "Autopilot ausgeschalten"
-                break
-            except Exception as e:
-                print "Pilot: Excception2 lautet: " + str(e)
-                time.sleep(2)
-                i += 1
-                if i > 5:
-                    print "Autopilot konnte nicht abgeschalten werden..."
-                    break
-
-    except Exception as e:
-        print "Fehler in pilot: " + str(e)
-
-    # Pilot ist fertig, der Autopilot wurde beendet
-    print "Pilot beendet"
-"""
 
 def mtest():
     print "Motorentest: t = 3 Sekunden\nLinks\nRechts\nZurueck\nOben\nUnten\n"
