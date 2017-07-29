@@ -30,7 +30,7 @@ getthegpsdatarunning = True
 ##################################################################### Root
 
 
-class GUI():
+class GUI:
     def __init__(self):
         root = tk.Tk()
         root.title("Ikarus (Version " + ikarusVersion + ")")
@@ -178,21 +178,14 @@ class GUI():
         self.pingbutton.pack()
         self.pingbutton.place(x=30, y=440)
 
-        self.pilotbutton = tk.Button(root, text="Autopilot einschalten", command=self.switchpilot)
-        self.pilotbutton.pack()
-        self.pilotbutton.place(x=30, y=470)
+        #self.pilotbutton = tk.Button(root, text="Autopilot einschalten", command=self.switchpilot)
+        #self.pilotbutton.pack()
+        #self.pilotbutton.place(x=30, y=470)
 
         ###### mainloop
 
         root.mainloop()
 
-    def switchpilot(self):
-        if networking.autopiloton == False:
-            networking.autopiloton = True
-            self.pilotbutton['text'] = "Autopilot ausschalten"
-        else:
-            networking.autopiloton = False
-            self.pilotbutton['text'] = "Autopilot einschalten"
 
     def autoping(self):
         time.sleep(3)
@@ -384,8 +377,7 @@ class GUI():
 
 myGUI = GUI()
 
-# beendet alle Threads und schließt alle Verbindungen
-networking.pilotrunning = False
+# beendet alle Threads und schließt alle vorhandenen Verbindungen
 networking.getgpsdatarunning = False
 autopingrunning = False
 getthegpsdatarunning = False
