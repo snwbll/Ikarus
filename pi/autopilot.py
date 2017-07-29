@@ -1,18 +1,17 @@
 # Ikarus Autopilot (Version 2.0)
 
+import os
 import sys
 import time
 from threading import Thread
 import threading
 from gps import *
 import RPi.GPIO as gpio
-import os
 
-hostname = sys.argv[1]  # einfacheres optparser, im Terminal "python skript.py "argument" (in diesem Fall Host IP)
+hostname = sys.argv[1]  # einfacheres optparser, im Terminal >python skript.py "argument"< (in diesem Fall Host IP)
 print "Verbindung mit " + hostname
 gpsd = None
 autorunning = False
-auto = None
 checkrunning = True
 i = 0
 inp = True
@@ -54,13 +53,9 @@ class AutoPilot(threading.Thread):
         global autorunning
         autorunning = True
         while autorunning:
-            # autopilot ist on, do stuff!
+            # autopilot ein, do stuff!
             # k = open("koordinaten.txt", "r")
             print "Autopilot gestartet... VERNICHTEN!"
-            os.system('python o.py')
-            time.sleep(1)
-            os.system('python stopo.py')
-            print "Breitengrad? " + str(gpsd.fix.latitude)
             time.sleep(1)
 
 
@@ -97,40 +92,40 @@ def koordinatenull():
             zeitnull = gpsd.fix.time
             altitudenull = gpsd.fix.altitude
             startlog = open("startkoordinaten.txt", "w+")
-            startlog.write(str(bgradnull) + "\n" + str(lgradnull) + "\nStartzeit: " + str(zeitnull)
-                           + "\nStart Alt: " + str(altitudenull))
+            startlog.write(str(bgradnull) + "\n" + str(lgradnull) + "\n" + str(altitudenull)
+                           + "\n" + str(zeitnull))
             startlog.close()
             break
-        except:
+        except Exception as e:
+            log = open("autopilotfehler.txt", "a")
+            log.write("Startkoordinaten konnten nicht festgelegt werden. Exception: " + str(e))
+            log.close()
             time.sleep(2)
 
 
 auto = AutoPilot()
 gpsp = GpsPoller()
 startgps()
-time.sleep(15)
+time.sleep(15)  # wartet t Sekunden damit das GPS Modul eine Verbindung zum Satelliten herstellen kann
 koordinatenull()
 
 
 def pingrouter():
     global autorunning
     global hostname
-    host = hostname  # IP des steuernden Laptops
+    host = hostname  # IP des steuernden Hosts (der Laptop)
+
     while True:
         try:
             # pingt den Router an
             response = os.system("ping -c 1 " + host)
             if response == 0:
                 # Host up
-                os.system('python u.py')
-                time.sleep(0.5)
-                os.system('python stopu.py')
                 pass
             else:
-                # Host down, Autopilot einschalten
+                # Host down, Autopilot ein
                 autorunning = True
-                startautopilot()  # Autopilot ein
-                print "Autopilot wurde eingeschalten... Suche eine Verbindung."
+                startautopilot()
                 while True:
                     # pingt weiterhin den Router an, um den Autopiloten bei Verbindung wieder auszuschalten
                     response = os.system("ping -c 1 " + host)
@@ -138,14 +133,12 @@ def pingrouter():
                         # Host up, Autopilot aus
                         autorunning = False
                         auto.join()
-                        print "Autopilot wurde wieder ausgeschalten, beende"
-                        sys.exit(1)
                         break
-
                     else:
                         pass
-                    time.sleep(1)
-            time.sleep(1)
+                    time.sleep(3)
+            time.sleep(2)
+
         except (KeyboardInterrupt, SystemExit):
             gpsp.running = False
             gpsp.join()
@@ -153,15 +146,6 @@ def pingrouter():
             auto.join()
             break
 
+
 p1 = Thread(target=pingrouter)
 p1.start()
-
-
-"""
-   except (KeyboardInterrupt, SystemExit):
-        gpsp.running = False
-        gpsp.join()
-        autorunning = False
-        auto.join()
-        break
-"""
