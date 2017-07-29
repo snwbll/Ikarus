@@ -1,13 +1,15 @@
-# Ikarus Autopilot (Version 1.2)
+# Ikarus Autopilot (Version 2.0)
 
+import sys
 import time
 from threading import Thread
 import threading
 from gps import *
-import os
 import RPi.GPIO as gpio
 import os
 
+hostname = sys.argv[1]  # einfacheres optparser, im Terminal "python skript.py "argument" (in diesem Fall Host IP)
+print "Verbindung mit " + hostname
 gpsd = None
 autorunning = False
 auto = None
@@ -17,6 +19,7 @@ inp = True
 
 os.system("sudo gpsd /dev/ttyUSB0 -F /var/run/gpsd.sock")
 # bereitet GPS vor
+
 
 class GpsPoller(threading.Thread):
     # holt aktuelle GPS Daten
@@ -32,14 +35,15 @@ class GpsPoller(threading.Thread):
         global gpsd
         while gpsp.running:
             gpsd.next()
+            """
             bgrad = gpsd.fix.latitude
             lgrad = gpsd.fix.longitude
             zeit = gpsd.fix.time
             alt = gpsd.fix.altitude
             speed = gpsd.fix.speed
             climb = gpsd.fix.climb
+            """
             time.sleep(1)
-
 
 
 class AutoPilot(threading.Thread):
@@ -52,10 +56,11 @@ class AutoPilot(threading.Thread):
         while autorunning:
             # autopilot ist on, do stuff!
             # k = open("koordinaten.txt", "r")
-            print "Autopilot gestartet... VERNICHTEN"
+            print "Autopilot gestartet... VERNICHTEN!"
             os.system('python o.py')
             time.sleep(1)
             os.system('python stopo.py')
+            print "Breitengrad? " + str(gpsd.fix.latitude)
             time.sleep(1)
 
 
@@ -71,7 +76,6 @@ def startgps():
 def startautopilot():
     global i
     global autorunning
-    global autoc
     try:
         auto.start()
     except Exception as e:
@@ -100,73 +104,64 @@ def koordinatenull():
         except:
             time.sleep(2)
 
+
 auto = AutoPilot()
 gpsp = GpsPoller()
 startgps()
 time.sleep(15)
 koordinatenull()
 
-def checkcheckcon():
-    global inp
+
+def pingrouter():
     global autorunning
-    global checkrunning
-    while checkrunning:
-        if inp == True:
-            inp = False
-            time.sleep(2)
-        elif inp == False:
-            time.sleep(3)
-            if inp == False:
-                if autorunning == True:
-                    pass
-                else:
-                    if checkrunning == True:
-                        print "autopilot wird gestartet"
-                        autorunning = True
-                        os.system('python o.py')
-                        time.sleep(2)
-                        os.system('python stopo.py')
-                        startautopilot() # autopilot ein!
+    global hostname
+    host = hostname  # IP des steuernden Laptops
+    while True:
+        try:
+            # pingt den Router an
+            response = os.system("ping -c 1 " + host)
+            if response == 0:
+                # Host up
+                os.system('python u.py')
+                time.sleep(0.5)
+                os.system('python stopu.py')
+                pass
+            else:
+                # Host down, Autopilot einschalten
+                autorunning = True
+                startautopilot()  # Autopilot ein
+                print "Autopilot wurde eingeschalten... Suche eine Verbindung."
+                while True:
+                    # pingt weiterhin den Router an, um den Autopiloten bei Verbindung wieder auszuschalten
+                    response = os.system("ping -c 1 " + host)
+                    if response == 0:
+                        # Host up, Autopilot aus
+                        autorunning = False
+                        auto.join()
+                        print "Autopilot wurde wieder ausgeschalten, beende"
+                        sys.exit(1)
+                        break
+
                     else:
                         pass
-            elif inp == True:
-                time.sleep(1)
-
-
-t1 = Thread(target=checkcheckcon)
-t1.start()
-print "checkchekcon gestartet"
-while True:
-    try:
-        while True:
-            # checkcon
-            a = int(input("pls input\n"))
-            if a == 1:
-                inp = True
-                if autorunning == True:
                     time.sleep(1)
-                    print "autopilot wird beendet weil wieder input vorhanden ist!"
-                    autorunning = False
-                    auto.join()
-            elif a == 2:
-                checkrunning = False
-                if autorunning == True:
-                    autorunning = False
-                    auto.join()
-                if gpsp.running == True:
-                    gpsp.running = False
-                    gpsp.join()
-                print "Beendet"
-                break
             time.sleep(1)
-        break
+        except (KeyboardInterrupt, SystemExit):
+            gpsp.running = False
+            gpsp.join()
+            autorunning = False
+            auto.join()
+            break
 
-    except (KeyboardInterrupt, SystemExit):
+p1 = Thread(target=pingrouter)
+p1.start()
+
+
+"""
+   except (KeyboardInterrupt, SystemExit):
         gpsp.running = False
         gpsp.join()
         autorunning = False
         auto.join()
         break
-
-    except Exception as e:
-        print "Autopilot: Fehler: " + str(e)
+"""
