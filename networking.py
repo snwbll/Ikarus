@@ -1,9 +1,11 @@
 ﻿# -*- coding: utf-8 -*-
 
-import paramiko
+import os
 import sys
 import time
 import select
+import socket
+import paramiko
 from threading import Thread
 from datetime import datetime
 
@@ -48,8 +50,8 @@ def initconnection():
         except paramiko.AuthenticationException:
             print("Authentifizierung fehlgeschalagen bei Verbindung mit " + host)
             sys.exit(1)
-        except:
-            print("Verbindung fehlgeschlagen, warten auf " + host)
+        except Exception as e:
+            print("Verbindung fehlgeschlagen, warten auf " + host + " (Exception: " + str(e) + ")")
             counter += 1
             time.sleep(2)
         if counter > 10:
@@ -66,7 +68,7 @@ def execute(command):
                 if len(rl) > 0:
                     return stdout.channel.recv(1024)  # Output
     except Exception as e:
-        print ("Fehler in execute: " + str(e))
+        print("Fehler in execute: " + str(e))
 
 
 def gpsconnection():
@@ -81,10 +83,10 @@ def gpsconnection():
             gpsverbindung = gpsssh
             break
         except paramiko.AuthenticationException:
-            print("Authentifizierung fehlgeschalagen bei GPS - Verbindung mit %d." % host)
+            print("Authentifizierung fehlgeschlagen bei GPS - Verbindung mit %s." % host)
             sys.exit(1)
-        except:
-            print("GPS - Verbindung fehlgeschlagen, warten auf %s" % host)
+        except Exception as e:
+            print("GPS - Verbindung fehlgeschlagen, warten auf %s (Exception: " + str(e) % host)
             time.sleep(2)
     getgpsdata()
 
@@ -104,28 +106,36 @@ def getgpsdata():
                         a = a.replace("[", "")  # die [] der erhaltenen Liste der GPS Daten werden entfernt
                         a = a.replace("]\r\n", "")
                         gpsdata = a.split(", ")
-                    if getgpsdatarunning == False:
+                    if not getgpsdatarunning:
                         break
             break
     except Exception as e:
         print("Fehler in getgpsdata: " + str(e))
-    print "Getgpsdata beendet."
+    print("Getgpsdata beendet.")
 
 
 def execute_nooutput(command):
     try:
-        stdin, stdout, stderr = sshverbindung.exec_command(command)
+        # stdin, stdout, stderr =
+        sshverbindung.exec_command(command)
     except Exception as e:
         print("Fehler in execute_nooutput: " + str(e))
 
 
 def mtest():
-    print "Motorentest: t = 3 Sekunden\nLinks\nRechts\nZurueck\nOben\nUnten\n"
+    print("Motorentest: t = 3 Sekunden\nLinks\nRechts\nZurueck\nOben\nUnten\n")
     execute_nooutput("python mtest.py")
 
 
+def startautopilot():
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    s.connect(('google.com', 0))
+    myip = s.getsockname()[0]  # die IP des Laptops
+    execute_nooutput("python autopilot.py '" + myip + "'")  # übergibt die IP an den Autopiloten für Pingabfragen
+
+
 def ping():
-    print "Ping!"
+    os.system("ping ")
     a = str(datetime.now())
     response = execute("./ping")  # gibt "Pong!" zurück
     b = datetime.now()

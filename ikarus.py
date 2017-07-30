@@ -40,7 +40,7 @@ class GUI:
         root.bind('<KeyPress>', self.key_input)
         root.bind('<KeyRelease>', self.key_release)
 
-        ##### Verbindung
+        # Verbindung
 
         self.verbindungslabel = tk.Label(root, text="Ikarus", bg="white", font=('Arial, 18'))
         self.vst = tk.Label(root, text="Status: ", bg="white")
@@ -58,7 +58,7 @@ class GUI:
         vsthread = Thread(target=self.autoping)
         vsthread.start()
 
-        ##### Daten
+        # Daten
 
         self.blabel = tk.Label(root, text="Breitengrad:", bg="white")
         self.llabel = tk.Label(root, text="Längengrad:", bg="white")
@@ -90,7 +90,7 @@ class GUI:
         self.tlabel.place(x=30, y=290)
         self.elabel.place(x=30, y=320)
 
-        ##### Daten 2
+        # Daten 2
 
         self.bd = tk.Label(root, text='', bg="white")  # Breitengrad
         self.ld = tk.Label(root, text='', bg="white")  # Längengrad
@@ -115,7 +115,7 @@ class GUI:
         g = Thread(target=self.getthegpsdata)
         g.start()
 
-        ##### Daten 3 (Offset)
+        # Daten 3 (Offset)
 
         self.bdoff = tk.Label(root, text='', bg="white")  # Breitengrad
         self.ldoff = tk.Label(root, text='', bg="white")  # Längengrad
@@ -136,7 +136,7 @@ class GUI:
         self.gdoff.place(x=300, y=180)
         self.starttim.place(x=300, y=300)
 
-        ##### Steuerung
+        # Steuerung
 
         self.a = False
         self.s = False
@@ -178,21 +178,19 @@ class GUI:
         self.pingbutton.pack()
         self.pingbutton.place(x=30, y=440)
 
-        #self.pilotbutton = tk.Button(root, text="Autopilot einschalten", command=self.switchpilot)
-        #self.pilotbutton.pack()
-        #self.pilotbutton.place(x=30, y=470)
+        # self.pilotbutton = tk.Button(root, text="Autopilot einschalten", command=self.switchpilot)
+        # self.pilotbutton.pack()
+        # self.pilotbutton.place(x=30, y=470)
 
-        ###### mainloop
-
+        # mainloop
         root.mainloop()
-
 
     def autoping(self):
         time.sleep(3)
         global autopingrunning
         autopingrunning = True
         try:
-            while autopingrunning == True:
+            while autopingrunning:
                 a = str(datetime.now())
                 response = networking.execute("./ping")  # gibt "Pong!" zurück
                 if str(response) == "Pong!":
@@ -228,7 +226,7 @@ class GUI:
         i = 30
         global getthegpsdatarunning
         getthegpsdatarunning = True
-        while getthegpsdatarunning == True:
+        while getthegpsdatarunning:
             try:
                 # Daten
                 self.bd['text'] = str(networking.gpsdata[0]) + " N"  # Breitengrad
@@ -308,32 +306,32 @@ class GUI:
         # nicht auf das Beenden des Prozessed warten muss, und pressed() / released() gleich ausführen kann.
         key_press = event.char.lower()
         if key_press == "a":
-            if self.a == False:
+            if not self.a:
                 networking.execute_nooutput("python l.py")
                 self.pressed("a")
                 self.a = True
         elif key_press == "d":
-            if self.d == False:
+            if not self.d:
                 networking.execute_nooutput("python r.py")
                 self.pressed("d")
                 self.d = True
         elif key_press == "w":
-            if self.w == False:
+            if not self.w:
                 networking.execute_nooutput("python v.py")
                 self.pressed("w")
                 self.w = True
         elif key_press == "s":
-            if self.s == False:
+            if not self.s:
                 networking.execute_nooutput("python z.py")
                 self.pressed("s")
                 self.s = True
         elif key_press == "o" or key_press.lower() == "p":
-            if self.o == False:
+            if not self.o:
                 networking.execute_nooutput("python o.py")
                 self.pressed("p")
                 self.o = True
         elif key_press == "k" or key_press.lower() == "l":
-            if self.u == False:
+            if not self.u:
                 networking.execute_nooutput("python u.py")
                 self.pressed("l")
                 self.u = True

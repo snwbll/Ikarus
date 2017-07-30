@@ -9,15 +9,12 @@ from gps import *
 import RPi.GPIO as gpio
 
 hostname = sys.argv[1]  # einfacheres optparser, im Terminal >python skript.py "argument"< (in diesem Fall Host IP)
-print "Verbindung mit " + hostname
+print "Host: " + hostname
 gpsd = None
 autorunning = False
-checkrunning = True
 i = 0
-inp = True
 
-os.system("sudo gpsd /dev/ttyUSB0 -F /var/run/gpsd.sock")
-# bereitet GPS vor
+os.system("sudo gpsd /dev/ttyUSB0 -F /var/run/gpsd.sock")  # bereitet GPS vor
 
 
 class GpsPoller(threading.Thread):
@@ -114,7 +111,6 @@ def pingrouter():
     global autorunning
     global hostname
     host = hostname  # IP des steuernden Hosts (der Laptop)
-
     while True:
         try:
             # pingt den Router an
@@ -140,6 +136,7 @@ def pingrouter():
             time.sleep(2)
 
         except (KeyboardInterrupt, SystemExit):
+            # beendet alle laufenden Threads
             gpsp.running = False
             gpsp.join()
             autorunning = False
