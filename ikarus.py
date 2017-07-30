@@ -2,15 +2,17 @@
 
 import Tkinter as tk
 import time
+import os
+import subprocess
 from threading import Thread
 import webbrowser
 from datetime import datetime
 
 import networking
 
-##################################################################### Info
+# Info
 
-ikarusVersion = "0.9"
+ikarusVersion = "1.0"
 
 # log 0.1: Verbindung
 # log 0.2: Verbindungsprobleme behoben
@@ -21,13 +23,14 @@ ikarusVersion = "0.9"
 # log 0.7: UI und Verbindung verbessert
 # log 0.8: Fehlerbehebungen
 # log 0.9: Unterstützung für Autopilot integriert
+# log 1.0: Interaktion mit Autopilot
 
-##################################################################### Running Variables
+# Running Variables
 
 autopingrunning = True
 getthegpsdatarunning = True
 
-##################################################################### Root
+# Root
 
 
 class GUI:
@@ -42,7 +45,7 @@ class GUI:
 
         # Verbindung
 
-        self.verbindungslabel = tk.Label(root, text="Ikarus", bg="white", font=('Arial, 18'))
+        self.verbindungslabel = tk.Label(root, text="Ikarus", bg="white", font="Arial, 18")
         self.vst = tk.Label(root, text="Status: ", bg="white")
         self.vstanzeige = tk.Label(root, text="Noch keine Verbindung", bg="white", width=30)
 
@@ -80,15 +83,15 @@ class GUI:
         self.tlabel.pack()
         self.elabel.pack()
 
-        self.blabel.place(x=30, y=80)
-        self.llabel.place(x=30, y=110)
-        self.hlabel.place(x=30, y=140)
-        self.glabel.place(x=30, y=170)
-        self.slabel.place(x=30, y=200)
-        self.alabel.place(x=30, y=230)
-        self.zlabel.place(x=30, y=260)
-        self.tlabel.place(x=30, y=290)
-        self.elabel.place(x=30, y=320)
+        self.blabel.place(x=30, y=90)
+        self.llabel.place(x=30, y=120)
+        self.hlabel.place(x=30, y=150)
+        self.glabel.place(x=30, y=180)
+        self.slabel.place(x=30, y=210)
+        self.alabel.place(x=30, y=240)
+        self.zlabel.place(x=30, y=270)
+        self.tlabel.place(x=30, y=300)
+        self.elabel.place(x=30, y=330)
 
         # Daten 2
 
@@ -178,6 +181,7 @@ class GUI:
         self.pingbutton.pack()
         self.pingbutton.place(x=30, y=440)
 
+        # TODO Button zum manuellen Aktivieren des Autopiloten
         # self.pilotbutton = tk.Button(root, text="Autopilot einschalten", command=self.switchpilot)
         # self.pilotbutton.pack()
         # self.pilotbutton.place(x=30, y=470)
@@ -188,44 +192,53 @@ class GUI:
     def autoping(self):
         time.sleep(3)
         global autopingrunning
-        autopingrunning = True
         try:
             while autopingrunning:
-                a = str(datetime.now())
-                response = networking.execute("./ping")  # gibt "Pong!" zurück
-                if str(response) == "Pong!":
-                    b = datetime.now()
-                    a = str(a)[17:19] + str(b)[20:23]
-                    b = str(b)[17:19] + str(b)[20:23]
-                    pingstat = str(int(b) - int(a))
+                import subprocess
+                pipe = subprocess.Popen("ping -n 1 " + networking.host, stdout=subprocess.PIPE, shell=True,
+                                        universal_newlines=True)
+                # über output = pipe.stdout.readlines() könnte man den Output lesen
+                pingup = pipe.wait()  # 0 = Verbindung, 1 = keine Verbindung
+                if pingup == 0:
+                    # Host up
+                    # ! ping = output
+                    # ! myping = ping[(len(ping) - 6):(len(ping)-2)]  # würde Ping in ms angeben
                     connectedstat = "Verbunden"
                     connectedcolor = "green"
-                    time.sleep(2)
                 else:
-                    print "Keine Verbindung... (Output bei ./ping: " + response + ")"
                     connectedstat = "Nicht Verbunden"
                     connectedcolor = "red"
-                    pingstat = str(0)
+                    self.vstanzeige['text'] = connectedstat
+                    self.vstanzeige['bg'] = connectedcolor
+                    # ! myping = str(0)
                     time.sleep(2)
-                    networking.initconnection()
-
-                self.vstanzeige['text'] = connectedstat + " (" + pingstat + " ms)"
+                    pipe = subprocess.Popen("ping -n 1 " + networking.host, stdout=subprocess.PIPE, shell=True,
+                                            universal_newlines=True)
+                    pingup = pipe.wait()
+                    if pingup == 0:
+                        # Verbindung steht wieder
+                        connectedstat = "Verbunden"
+                        connectedcolor = "green"
+                    else:
+                        # immer noch keine Verbindung
+                        os.system("ping " + networking.host)
+                        print "Beende alle Verbindungen und verbinde neu..."
+                        networking.closessh()
+                        # beendet Verbindungen und verbindet sich neu
+                        networking.initconnection()
+                self.vstanzeige['text'] = connectedstat  # ! + " (" + myping + ")"
                 self.vstanzeige['bg'] = connectedcolor
-            print "Autoping beendet."
+                time.sleep(4)
 
+            print "Autoping beendet."
         except Exception as e:
-            e = str(e)
-            if e[0:20] == 'invalid command name':
-                pass  # rootwindow ist beendet
-            else:
-                print "Fehler in autoping: " + str(e)
-                time.sleep(3)
+            print "Fehler in autoping: " + str(e)
+            time.sleep(3)
 
     def getthegpsdata(self):
         starttime = str(datetime.now())[11:16]
         i = 30
         global getthegpsdatarunning
-        getthegpsdatarunning = True
         while getthegpsdatarunning:
             try:
                 # Daten

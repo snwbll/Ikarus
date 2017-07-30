@@ -3,13 +3,13 @@
 import os
 import sys
 import time
+import subprocess
 from threading import Thread
 import threading
 from gps import *
 import RPi.GPIO as gpio
 
 hostname = sys.argv[1]  # einfacheres optparser, im Terminal >python skript.py "argument"< (in diesem Fall Host IP)
-print "Host: " + hostname
 gpsd = None
 autorunning = False
 i = 0
@@ -25,7 +25,6 @@ class GpsPoller(threading.Thread):
         gpsd = gps(mode=WATCH_ENABLE)
         self.current_value = None
         self.running = True
-        print "GPS gestartet"
 
     def run(self):
         global gpsd
@@ -40,6 +39,12 @@ class GpsPoller(threading.Thread):
             climb = gpsd.fix.climb
             """
             time.sleep(1)
+
+
+# TODO entfernen
+os.system("python o.py")
+time.sleep(1)
+os.system("python stopo.py")
 
 
 class AutoPilot(threading.Thread):
@@ -114,7 +119,9 @@ def pingrouter():
     while True:
         try:
             # pingt den Router an
-            response = os.system("ping -c 1 " + host)
+            pipe = subprocess.Popen("ping -c 1 " + host, stdout=subprocess.PIPE, shell=True,
+                                    universal_newlines=True)
+            response = pipe.wait()  # gibt 0 bei Verbindung und 1 bei keiner Verbindung aus
             if response == 0:
                 # Host up
                 pass
@@ -124,7 +131,9 @@ def pingrouter():
                 startautopilot()
                 while True:
                     # pingt weiterhin den Router an, um den Autopiloten bei Verbindung wieder auszuschalten
-                    response = os.system("ping -c 1 " + host)
+                    pipe = subprocess.Popen("ping -c 1 " + host, stdout=subprocess.PIPE, shell=True,
+                                            universal_newlines=True)
+                    response = pipe.wait()
                     if response == 0:
                         # Host up, Autopilot aus
                         autorunning = False
