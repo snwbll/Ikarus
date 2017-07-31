@@ -9,7 +9,7 @@ import paramiko
 from threading import Thread
 
 getgpsdatarunning = True
-host = "192.168.1.120"  # dynamischer: raw_input("\ninet Adresse des Hosts: "), Pi muss dann keine statische IP haben
+host = "192.168.1.99"  # dynamischer: raw_input("\ninet Adresse des Hosts: "), Pi muss dann keine statische IP haben
 username = "pi"
 password = "Snowball"
 nodata = "Keine Daten"
